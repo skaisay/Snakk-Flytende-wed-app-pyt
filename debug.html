@@ -1,0 +1,111 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Отладка мастер-базы</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background: #1e1e2e;
+            color: white;
+            padding: 20px;
+        }
+        .status {
+            background: rgba(255,255,255,0.1);
+            padding: 15px;
+            margin: 10px 0;
+            border-radius: 10px;
+        }
+        .good { border-left: 4px solid #22c55e; }
+        .bad { border-left: 4px solid #ef4444; }
+        .test-input {
+            padding: 10px;
+            width: 300px;
+            margin: 10px 0;
+            border: 1px solid #333;
+            background: #333;
+            color: white;
+            border-radius: 5px;
+        }
+        .test-button {
+            padding: 10px 20px;
+            background: #4F9CF9;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+    <h1>🔍 Отладка мастер-базы данных</h1>
+    
+    <div class="status" id="database-status">
+        ⏳ Проверяю загрузку базы данных...
+    </div>
+    
+    <div class="status" id="test-result">
+        <h3>Тест перевода:</h3>
+        <input type="text" id="test-input" class="test-input" placeholder="Введите тест_изменение" value="тест_изменение">
+        <button class="test-button" onclick="testTranslation()">Проверить</button>
+        <div id="translation-result" style="margin-top: 10px;"></div>
+    </div>
+
+    <div class="status" id="raw-data">
+        <h3>Содержимое мастер-базы:</h3>
+        <div id="data-content">Загружаю...</div>
+    </div>
+
+    <script src="./database.js?v=20250702z"></script>
+    <script>
+        // Проверка загрузки единой базы данных
+        function checkDatabase() {
+            const status = document.getElementById('database-status');
+            const rawData = document.getElementById('data-content');
+            
+            if (typeof NORWEGIAN_DATABASE !== 'undefined') {
+                status.innerHTML = '✅ NORWEGIAN_DATABASE загружена';
+                status.className = 'status good';
+                
+                // Показать содержимое
+                const translations = NORWEGIAN_DATABASE.translations || {};
+                const translationCount = Object.keys(translations).length;
+                
+                rawData.innerHTML = `
+                    <p><strong>Переводов:</strong> ${translationCount}</p>
+                    <p><strong>Разговорных фраз:</strong> ${Object.keys(NORWEGIAN_DATABASE.conversations || {}).length}</p>
+                    <p><strong>Словарных категорий:</strong> ${Object.keys(NORWEGIAN_DATABASE.vocabulary || {}).length}</p>
+                    <pre style="background: #000; padding: 10px; border-radius: 5px; overflow: auto; max-height: 200px;">${JSON.stringify(translations, null, 2)}</pre>
+                `;
+            } else {
+                status.innerHTML = '❌ NORWEGIAN_DATABASE не загружена';
+                status.className = 'status bad';
+                rawData.innerHTML = 'База данных не найдена';
+            }
+        }
+        
+        function testTranslation() {
+            const input = document.getElementById('test-input').value.trim();
+            const result = document.getElementById('translation-result');
+            
+            if (typeof NORWEGIAN_DATABASE !== 'undefined' && NORWEGIAN_DATABASE.translations) {
+                const translation = NORWEGIAN_DATABASE.translations[input];
+                if (translation) {
+                    result.innerHTML = `✅ <strong>${input}</strong> → <strong>${translation}</strong>`;
+                    result.style.color = '#22c55e';
+                } else {
+                    result.innerHTML = `❌ Перевод для "${input}" не найден`;
+                    result.style.color = '#ef4444';
+                }
+            } else {
+                result.innerHTML = '❌ База данных недоступна';
+                result.style.color = '#ef4444';
+            }
+        }
+        
+        // Проверить сразу при загрузке
+        setTimeout(checkDatabase, 100);
+    </script>
+</body>
+</html>
